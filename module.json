@@ -1,0 +1,25 @@
+{
+    "id": "emailtemplates",
+    "name": "Email Template Editor",
+    "description": "Customize email templates through the admin interface",
+    "keywords": [
+        "email",
+        "templates",
+        "customization",
+        "admin"
+    ],
+    "version": "1.0.0",
+    "humhub": {
+        "minVersion": "1.17.0",
+        "maxVersion": "1.17.99"
+    },
+    "authors": [
+        {
+            "name": "Your Name",
+            "email": "your.email@example.com",
+            "homepage": "https://www.example.com",
+            "role": "Developer"
+        }
+    ],
+    "namespace": "humhub\\modules\\emailtemplates"
+}
