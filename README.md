@@ -19,14 +19,26 @@ This plugin allows administrators to customize email templates directly from the
   - Customize email colors (primary, background, text, links, buttons)
   - HumHub's native rich text editor for headers and footers
   - Custom CSS editor for advanced styling
-  - Logo URL configuration
+  - **Logo management with 3 options:**
+    - Upload custom logo for emails
+    - Use HumHub appearance logo automatically
+    - Enter logo URL manually
   - Live preview with real-time updates
   - Export/import style configurations
+  - **Color variables for dynamic styling** ({primary_color}, {background_color}, etc.)
+  - Use color variables in headers, footers, and custom CSS
   - Separate admin menu section
+- **🔔 NEW: Notification Settings Manager**
+  - Control notification channels (Email, Web, Mobile, Desktop)
+  - Enable/disable notifications per type
+  - User override permissions
+  - Bulk update functionality
+  - Organized by category (Content, Social, Spaces, System)
+  - 12 configurable notification types
 
 **Access the new features:**
    - Email Templates: Administration → Settings → Email Templates
-   - Email Style Designer: Administration → Settings → Email Style Designer# HumHub Email Template Editor Plugin
+   - Email Style Designer: Administration → Settings → Email Style Designer
 
 ## Installation
 
@@ -41,11 +53,16 @@ This plugin allows administrators to customize email templates directly from the
 2. **New Comment Notification** - When someone comments on content
 3. **New Like Notification** - When someone likes content
 4. **Space Invitation** - Inviting users to spaces
-5. **User Invitation** - Inviting new users to the platform
-6. **Password Recovery** - Password reset emails
-7. **Welcome Email** - New user welcome messages
-8. **New Follower Notification** - When someone follows you
-9. **Mention Notification** - When someone mentions you
+5. **Space Member Added** - When a user is added to a space
+6. **Space Membership Request** - When someone requests to join a space
+7. **Space Membership Approved** - When membership request is approved
+8. **Space Membership Declined** - When membership request is declined
+9. **New Content in Space** - When new content is posted in a space
+10. **User Invitation** - Inviting new users to the platform
+11. **Password Recovery** - Password reset emails
+12. **Welcome Email** - New user welcome messages
+13. **New Follower Notification** - When someone follows you
+14. **Mention Notification** - When someone mentions you
 
 ## Usage
 
@@ -62,6 +79,22 @@ Navigate to **Administration → Settings → Email Templates** to:
 - PHP 7.4 or higher
 
 ## Changelog
+
+### Version 1.2.0 (Notification Settings Manager)
+- **NEW: Notification Settings Manager** - Complete control over notification channels
+- Configure Email, Web, Mobile, and Desktop notifications
+- 12 notification types across 4 categories
+- User override permission control
+- Bulk update functionality
+- Individual notification editing
+- New database table for notification settings
+- Third migration file
+- New admin menu entry "Notification Settings"
+- Organized by category (Content, Social, Spaces, System)
+- **Updated all default email templates with HumHub's original HTML structure**
+- All templates now use HumHub's Foundation-based email framework
+- Proper responsive email design with table layouts
+- Consistent styling across all notification types
 
 ### Version 1.1.0 (Email Style Designer)
 - **NEW: Visual Email Style Designer** - Complete email branding customization
