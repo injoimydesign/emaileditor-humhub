@@ -25,6 +25,11 @@ use yii\db\ActiveRecord;
 class EmailStyle extends ActiveRecord
 {
     /**
+     * @var \yii\web\UploadedFile
+     */
+    public $logo_file;
+
+    /**
      * @inheritdoc
      */
     public static function tableName()
@@ -42,6 +47,7 @@ class EmailStyle extends ActiveRecord
             [['primary_color', 'background_color', 'text_color', 'link_color', 'button_color', 'button_text_color'], 'string', 'max' => 7],
             [['logo_url'], 'string', 'max' => 255],
             [['primary_color', 'background_color', 'text_color', 'link_color', 'button_color', 'button_text_color'], 'match', 'pattern' => '/^#[0-9A-Fa-f]{6}$/'],
+            [['logo_file'], 'file', 'skipOnEmpty' => true, 'extensions' => 'png, jpg, jpeg, gif, svg', 'maxSize' => 1024 * 1024 * 2], // 2MB max
         ];
     }
 
@@ -108,15 +114,15 @@ class EmailStyle extends ActiveRecord
         $this->button_color = '#3498db';
         $this->button_text_color = '#ffffff';
         
-        $this->header_html = '<div style="text-align: center; padding: 20px;">
-    <img src="{logo_url}" alt="Logo" style="max-width: 200px; height: auto;">
+        $this->header_html = '<div style="text-align: center; padding: 20px; background-color: {primary_color};">
+    <img src="{logo_url}" alt="{siteName}" style="max-width: 200px; height: auto;">
 </div>';
         
-        $this->footer_html = '<div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
-    <p>&copy; ' . date('Y') . ' {siteName}. All rights reserved.</p>
-    <p>
-        <a href="{unsubscribe_url}" style="color: #999;">Unsubscribe</a> | 
-        <a href="{settings_url}" style="color: #999;">Email Settings</a>
+        $this->footer_html = '<div style="text-align: center; padding: 20px; font-size: 12px; color: #999; background-color: {background_color};">
+    <p style="margin: 0 0 10px 0;">&copy; ' . date('Y') . ' {siteName}. All rights reserved.</p>
+    <p style="margin: 0;">
+        <a href="{unsubscribe_url}" style="color: {link_color}; text-decoration: none;">Unsubscribe</a> | 
+        <a href="{settings_url}" style="color: {link_color}; text-decoration: none;">Email Settings</a>
     </p>
 </div>';
         
@@ -125,16 +131,99 @@ class EmailStyle extends ActiveRecord
     max-width: 600px;
     margin: 0 auto;
     font-family: Arial, sans-serif;
+    background-color: {background_color};
 }
 
 .email-button {
     display: inline-block;
     padding: 12px 24px;
+    background-color: {button_color};
+    color: {button_text_color};
     text-decoration: none;
     border-radius: 4px;
+}
+
+.email-button:hover {
+    opacity: 0.9;
+}
+
+.email-link {
+    color: {link_color};
+    text-decoration: none;
+}
+
+.email-text {
+    color: {text_color};
 }';
         
-        $this->logo_url = '';
+        // Get logo from HumHub appearance settings
+        $this->logo_url = $this->getDefaultLogoUrl();
+    }
+
+    /**
+     * Get default logo URL from HumHub appearance settings
+     * @return string|null
+     */
+    protected function getDefaultLogoUrl()
+    {
+        // Try to get the logo from HumHub's appearance settings
+        $logo = Yii::$app->view->theme->getBaseUrl() . '/img/logo.png';
+        
+        // Check if custom logo exists in appearance settings
+        if (file_exists(Yii::getAlias('@webroot/assets/logo/600x600.png'))) {
+            return Yii::$app->request->getHostInfo() . Yii::getAlias('@web/assets/logo/600x600.png');
+        }
+        
+        // Check for logo image in various possible locations
+        $possiblePaths = [
+            '@webroot/assets/logo/600x600.png',
+            '@webroot/assets/logo/600x600.jpg',
+            '@webroot/assets/logo/600x600.gif',
+            '@webroot/img/logo.png',
+            '@webroot/img/logo.jpg',
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            if (file_exists(Yii::getAlias($path))) {
+                $webPath = str_replace('@webroot', '@web', $path);
+                return Yii::$app->request->getHostInfo() . Yii::getAlias($webPath);
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if HumHub has a logo configured
+     * @return bool
+     */
+    public function hasDefaultLogo()
+    {
+        return $this->getDefaultLogoUrl() !== null;
+    }
+
+    /**
+     * Get current logo URL or default
+     * @return string|null
+     */
+    public function getLogoUrl()
+    {
+        // First priority: manually set logo_url (either uploaded or entered manually)
+        if (!empty($this->logo_url)) {
+            return $this->logo_url;
+        }
+        
+        // Second priority: try to get HumHub default logo
+        return $this->getDefaultLogoUrl();
+    }
+    
+    /**
+     * Check if any logo is available (uploaded or default)
+     * @return bool
+     */
+    public function hasLogo()
+    {
+        return !empty($this->getLogoUrl());
     }
 
     /**
@@ -162,11 +251,20 @@ class EmailStyle extends ActiveRecord
      */
     protected function replaceVariables($html)
     {
+        $logoUrl = $this->getLogoUrl();
+        
         $variables = [
-            '{logo_url}' => $this->logo_url ?: 'https://via.placeholder.com/200x60?text=Logo',
+            '{logo_url}' => $logoUrl ?: 'https://via.placeholder.com/200x60?text=Logo',
             '{siteName}' => Yii::$app->name,
             '{unsubscribe_url}' => '#',
             '{settings_url}' => '#',
+            // Color variables
+            '{primary_color}' => $this->primary_color,
+            '{background_color}' => $this->background_color,
+            '{text_color}' => $this->text_color,
+            '{link_color}' => $this->link_color,
+            '{button_color}' => $this->button_color,
+            '{button_text_color}' => $this->button_text_color,
         ];
         
         return str_replace(array_keys($variables), array_values($variables), $html);

@@ -5,6 +5,7 @@ namespace humhub\modules\emailtemplates\controllers;
 use Yii;
 use humhub\modules\admin\components\Controller;
 use humhub\modules\emailtemplates\models\EmailStyle;
+use yii\web\UploadedFile;
 
 class StyleController extends Controller
 {
@@ -20,9 +21,32 @@ class StyleController extends Controller
             $model->save();
         }
         
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Email style saved successfully.');
-            return $this->refresh();
+        if ($model->load(Yii::$app->request->post())) {
+            // Handle logo upload
+            $logoFile = UploadedFile::getInstance($model, 'logo_file');
+            
+            if ($logoFile) {
+                $uploadPath = Yii::getAlias('@webroot/uploads/emailtemplates/');
+                
+                // Create directory if it doesn't exist
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                
+                $fileName = 'logo_' . time() . '.' . $logoFile->extension;
+                $filePath = $uploadPath . $fileName;
+                
+                if ($logoFile->saveAs($filePath)) {
+                    $model->logo_url = Yii::$app->request->getHostInfo() . '/uploads/emailtemplates/' . $fileName;
+                    Yii::$app->session->setFlash('success', 'Logo uploaded successfully.');
+                }
+            }
+            
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Email style saved successfully.');
+                // Refresh to reload the model with saved data
+                return $this->redirect(['index']);
+            }
         }
         
         return $this->render('index', [
@@ -86,5 +110,49 @@ class StyleController extends Controller
         Yii::$app->response->headers->set('Content-Disposition', 'attachment; filename="email-style-export.json"');
         
         return $export;
+    }
+
+    /**
+     * Use HumHub's appearance logo
+     */
+    public function actionUseAppearanceLogo()
+    {
+        $model = EmailStyle::getActive();
+        
+        // Check if HumHub has a logo configured
+        if (!$model->hasDefaultLogo()) {
+            Yii::$app->session->setFlash('error', 'No logo found in HumHub appearance settings. Please upload a logo in Administration → Settings → Appearance first, or upload a custom logo here.');
+            return $this->redirect(['index']);
+        }
+        
+        // Get the default logo from HumHub
+        $defaultLogo = $model->getDefaultLogoUrl();
+        
+        $model->logo_url = $defaultLogo;
+        if ($model->save()) {
+            Yii::$app->session->setFlash('success', 'HumHub appearance logo applied successfully.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Failed to save logo settings.');
+        }
+        
+        return $this->redirect(['index']);
+    }
+    
+    /**
+     * Remove/clear the current logo
+     */
+    public function actionRemoveLogo()
+    {
+        $model = EmailStyle::getActive();
+        
+        $model->logo_url = '';
+        
+        if ($model->save()) {
+            Yii::$app->session->setFlash('success', 'Logo removed successfully.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Failed to remove logo.');
+        }
+        
+        return $this->redirect(['index']);
     }
 }
